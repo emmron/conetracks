@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body {
+  font-family: 'Avenir', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  background-color: #f0f0f5; /* Light grey background, similar to iOS */
+}
+
+/* Custom styles for iOS-like components */
+.button-ios {
+  background-color: #007aff; /* iOS blue */
+  color: white;
+  padding: 8px 16px;
+  border-radius: 14px;
+  font-weight: 500;
+  text-align: center;
+  display: inline-block;
+}
+
+.input-ios {
+  border: 1px solid #c7c7cc; /* iOS input border color */
+  padding: 12px;
+  border-radius: 10px;
+  width: calc(100% - 24px);
+}
+
+/* Adjusting Tailwind's container to fit an iOS design */
+.container {
+  max-width: 375px; /* iOS screen width */
+  margin: 0 auto;
+  padding: 20px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  border-radius: 20px;
+  background-color: white;
+}
+
+/* Ensuring the app looks good on iOS-sized screens */
+@media (min-width: 375px) {
+  .container {
+    margin-top: 20px;
+    margin-bottom: 20px;
+  }
+}

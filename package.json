@@ -1,0 +1,27 @@
+{
+  "name": "aus-stoner-app",
+  "version": "1.0.0",
+  "description": "A native web app that looks like an iOS app, capable of estimating the weight/size of a packed cone for a bong from a photo and tracking it using GPT-4-turbo API.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "latest",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "tailwindcss": "^2.2.19",
+    "postcss": "^8.3.6",
+    "autoprefixer": "^10.3.1",
+    "axios": "^0.21.1",
+    "@tailwindcss/forms": "^0.3.3",
+    "openai": "^1.0.0"
+  },
+  "devDependencies": {
+    "eslint": "7.32.0",
+    "eslint-config-next": "11.1.2"
+  }
+}
