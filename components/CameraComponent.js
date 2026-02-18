@@ -1,14 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
-import OpenAI from "openai";
+import React, { useState, useRef } from 'react';
 
-const CameraComponent = () => {
+const CameraComponent = ({ onAnalysisResult }) => {
   const [image, setImage] = useState(null);
   const [analysisResult, setAnalysisResult] = useState('');
+  const [loading, setLoading] = useState(false);
   const fileInputRef = useRef();
-
-  useEffect(() => {
-    // This effect could be used for additional setup or teardown logic
-  }, []);
 
   const handleCapture = (event) => {
     const file = event.target.files[0];
@@ -16,96 +12,95 @@ const CameraComponent = () => {
       const reader = new FileReader();
       reader.onloadend = () => {
         setImage(reader.result);
+        setAnalysisResult('');
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const imageToText = (image) => {
-    // Assuming `imageToText` is a function that converts the image to a descriptive text
-    // This is a placeholder function, you would need to replace it with the actual implementation
-    return new Promise((resolve, reject) => {
-      // Placeholder implementation
-      resolve('This is a placeholder text description of the image.');
-    });
-  };
-
   const handleSubmit = async () => {
     if (!image) return;
 
-    const imageDescription = await imageToText(image); // Convert image to text description
-
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
+    setLoading(true);
+    setAnalysisResult('');
 
     try {
-      const response = await openai.chat.completions.create({
-        model: "gpt-4-turbo-preview",
-        messages: [
-          {
-            "role": "user",
-            "content": imageDescription // Use the text description here
-          }
-        ],
-        temperature: 1,
-        max_tokens: 4095,
-        top_p: 1,
-        frequency_penalty: 0,
-        presence_penalty: 0,
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageData: image }),
       });
 
-      console.log('Cone Analysis Result:', response.data);
-      setAnalysisResult(response.data.choices[0].message.content); // Assuming the API returns a structured response
+      const data = await response.json();
 
-      // Optionally, handle the response data (e.g., display weight/size of the cone)
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to analyze image');
+      }
+
+      setAnalysisResult(data.analysis);
+      if (onAnalysisResult) onAnalysisResult(data.analysis);
     } catch (error) {
       console.error('Error submitting image for analysis:', error);
-      setAnalysisResult('Failed to analyze image. Please try again.');
+      const errMsg = 'Failed to analyze image. Please try again.';
+      setAnalysisResult(errMsg);
+      if (onAnalysisResult) onAnalysisResult(errMsg);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    // Reset the image and clear the file input
+  const handleReset = () => {
     setImage(null);
-    fileInputRef.current.value = null;
+    setAnalysisResult('');
+    if (fileInputRef.current) fileInputRef.current.value = null;
   };
 
   return (
     <div className="p-4">
-      <div className="mb-4">
-        {image ? (
-          <div className="mb-4">
-            <img src={image} alt="Captured" className="max-w-full h-auto" />
+      {!image ? (
+        <label className="block">
+          <span className="sr-only">Choose or capture an image</span>
+          <input
+            type="file"
+            className="block w-full text-sm text-gray-500
+            file:mr-4 file:py-2 file:px-4
+            file:rounded-full file:border-0
+            file:text-sm file:font-semibold
+            file:bg-blue-500 file:text-white
+            hover:file:bg-blue-700"
+            accept="image/*"
+            capture="environment"
+            onChange={handleCapture}
+            ref={fileInputRef}
+          />
+        </label>
+      ) : (
+        <div className="mb-4">
+          <img src={image} alt="Captured cone" className="max-w-full h-auto rounded-lg mb-3" />
+          <div className="flex gap-2 justify-center">
             <button
-              className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 transition duration-300"
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 transition duration-300 disabled:opacity-50"
               onClick={handleSubmit}
+              disabled={loading}
             >
-              Analyze Cone
+              {loading ? 'Analyzing...' : 'Analyze Cone'}
             </button>
-            {analysisResult && (
-              <div className="mt-4 p-4 bg-white rounded shadow">
-                <h3 className="text-lg font-semibold">Analysis Result:</h3>
-                <p>{analysisResult}</p>
-              </div>
-            )}
+            <button
+              className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-600 transition duration-300"
+              onClick={handleReset}
+              disabled={loading}
+            >
+              Retake
+            </button>
           </div>
-        ) : (
-          <label className="block">
-            <span className="sr-only">Choose profile photo</span>
-            <input
-              type="file"
-              className="block w-full text-sm text-gray-500
-              file:mr-4 file:py-2 file:px-4
-              file:rounded-full file:border-0
-              file:text-sm file:font-semibold
-              file:bg-blue-500 file:text-white
-              hover:file:bg-blue-700"
-              accept="image/*"
-              onChange={handleCapture}
-              ref={fileInputRef}
-            />
-          </label>
-        )}
-      </div>
+          {analysisResult && (
+            <div className="mt-4 p-4 bg-white rounded shadow text-left">
+              <h3 className="text-lg font-semibold mb-1">Analysis Result:</h3>
+              <p className="text-sm text-gray-700">{analysisResult}</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
