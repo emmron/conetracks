@@ -1,52 +1,120 @@
 import Head from 'next/head'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import CameraComponent from '../components/CameraComponent'
 
+const HISTORY_KEY = 'cone_history'
+const MAX_HISTORY = 20
+
 export default function Home() {
-  const [analysisResult, setAnalysisResult] = useState('')
+  const [history, setHistory] = useState([])
+  const [tab, setTab] = useState('camera') // 'camera' | 'history'
+
+  useEffect(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]')
+      setHistory(stored)
+    } catch {
+      setHistory([])
+    }
+  }, [])
 
   const handleAnalysisResult = (result) => {
-    setAnalysisResult(result)
+    if (!result || result.startsWith('Failed')) return
+    const entry = { result, timestamp: Date.now() }
+    setHistory((prev) => {
+      const updated = [entry, ...prev].slice(0, MAX_HISTORY)
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(updated))
+      return updated
+    })
   }
 
+  const clearHistory = () => {
+    localStorage.removeItem(HISTORY_KEY)
+    setHistory([])
+  }
+
+  const formatDate = (ts) =>
+    new Date(ts).toLocaleString(undefined, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    })
+
   return (
-    <div className="ios:min-h-screen ios:bg-gray-100 ios:flex ios:flex-col ios:items-center ios:justify-center ios:py-2">
+    <div className="min-h-screen bg-gray-100 flex flex-col items-center py-6 px-4">
       <Head>
-        <title>Aus Stoner App</title>
+        <title>Stonerific</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className="flex flex-col items-center w-full flex-1 text-center px-4 py-4 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-lg shadow-inner">
-        <h1 className="text-5xl font-bold mb-5 text-white font-serif">
-          Stonerific
-        </h1>
-        <div className="mb-5"></div>
-        <h2 className="text-2xl font-semibold mb-5 text-white font-serif">
-          Elevate your cone experience
-        </h2>
-        <p className="mb-6 text-lg text-white font-sans">Ready to enhance your cone experience? Capture an image of your packed cone and let us estimate its weight/size.</p>
-        <div className="w-full max-w-xs mb-8">
-          <CameraComponent onAnalysisResult={handleAnalysisResult} />
+      <div className="w-full max-w-sm bg-white rounded-3xl shadow-xl overflow-hidden">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-6 pt-8 pb-6 text-white text-center">
+          <h1 className="text-3xl font-bold font-serif tracking-tight">Stonerific</h1>
+          <p className="mt-1 text-purple-200 text-sm">Elevate your cone experience</p>
         </div>
-        {analysisResult && (
-          <div className="mt-10 p-5 bg-white rounded-2xl shadow-xl">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-2">Cone Analysis Result:</h2>
-            <p className="text-md text-gray-700">{analysisResult}</p>
-          </div>
-        )}
-      </main>
 
-      <footer className="ios:flex ios:items-center ios:justify-center ios:w-full ios:h-24 ios:border-t">
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="ios:flex ios:items-center ios:justify-center"
-        >
-          Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel Logo" className="ios:h-4 ios:ml-2" />
-        </a>
-      </footer>
+        {/* Tab bar */}
+        <div className="flex border-b border-gray-200">
+          <button
+            className={`flex-1 py-3 text-sm font-semibold transition-colors ${
+              tab === 'camera'
+                ? 'text-indigo-600 border-b-2 border-indigo-600'
+                : 'text-gray-400 hover:text-gray-600'
+            }`}
+            onClick={() => setTab('camera')}
+          >
+            Analyze
+          </button>
+          <button
+            className={`flex-1 py-3 text-sm font-semibold transition-colors ${
+              tab === 'history'
+                ? 'text-indigo-600 border-b-2 border-indigo-600'
+                : 'text-gray-400 hover:text-gray-600'
+            }`}
+            onClick={() => setTab('history')}
+          >
+            History {history.length > 0 && `(${history.length})`}
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-4">
+          {tab === 'camera' ? (
+            <>
+              <p className="text-center text-gray-500 text-sm mb-4">
+                Capture your packed cone and get an AI estimate of its weight and quality.
+              </p>
+              <CameraComponent onAnalysisResult={handleAnalysisResult} />
+            </>
+          ) : (
+            <div>
+              {history.length === 0 ? (
+                <p className="text-center text-gray-400 text-sm py-10">
+                  No analyses yet. Go analyze a cone!
+                </p>
+              ) : (
+                <>
+                  <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
+                    {history.map((entry, i) => (
+                      <div key={i} className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                        <p className="text-xs text-gray-400 mb-1">{formatDate(entry.timestamp)}</p>
+                        <p className="text-sm text-gray-700 leading-snug">{entry.result}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    onClick={clearHistory}
+                    className="mt-4 w-full py-2 text-xs text-red-400 hover:text-red-600 transition-colors"
+                  >
+                    Clear history
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

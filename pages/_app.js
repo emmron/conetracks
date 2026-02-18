@@ -8,7 +8,7 @@ function MyApp({ Component, pageProps }) {
   useEffect(() => {
     // Check if TailwindCSS's screen is 'ios'
     const handleResize = () => {
-      if (window.innerWidth <= 375) {
+      if (window.innerWidth >= 375) {
         document.documentElement.classList.add('ios')
       } else {
         document.documentElement.classList.remove('ios')
