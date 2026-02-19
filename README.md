@@ -17,7 +17,7 @@ To get started with the Aus Stoner App, follow these steps:
 2. Install the dependencies by running `npm install`.
 3. Create a `.env.local` file in the root directory and add your GPT-4-turbo API key as follows:
    ```
-   GPT_API_KEY=your_gpt_4_turbo_api_key_here
+   OPENAI_API_KEY=your_openai_api_key_here
    NEXT_PUBLIC_APP_ENV=development
    ```
 4. Start the development server by running `npm run dev`.
