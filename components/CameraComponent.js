@@ -52,7 +52,7 @@ const CameraComponent = ({ onAnalysisResult }) => {
   const handleReset = () => {
     setImage(null);
     setAnalysisResult('');
-    if (fileInputRef.current) fileInputRef.current.value = null;
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   return (
